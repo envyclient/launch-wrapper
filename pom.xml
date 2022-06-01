@@ -6,7 +6,7 @@
 
     <groupId>com.envyclient.launch</groupId>
     <artifactId>launch-wrapper</artifactId>
-    <version>1.1</version>
+    <version>1.1.1</version>
 
     <name>launch-wrapper</name>
     <description>Launch Wrapper for Minecraft used in the SDK</description>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.github.envyclient</groupId>
             <artifactId>fusion</artifactId>
-            <version>1.1.8</version>
+            <version>1.2.6</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

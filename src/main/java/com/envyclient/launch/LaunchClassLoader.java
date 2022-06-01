@@ -27,10 +27,7 @@ public class LaunchClassLoader extends URLClassLoader {
     }
 
     public void transform() {
-        CLASS_PATH.map(new Fusion(
-                CLASS_PATH.getAllTransformableClasses(),
-                CLASS_PATH.getConfigurations()
-        ).export());
+        CLASS_PATH.map(new Fusion().export());
     }
 
     /**

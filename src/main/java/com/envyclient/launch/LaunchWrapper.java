@@ -7,7 +7,6 @@ import joptsimple.OptionSpec;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 public class LaunchWrapper {
 
@@ -16,18 +15,9 @@ public class LaunchWrapper {
     private static final File WORKING_DIRECTORY = new File("minecraft");
     private static final File ASSETS_DIRECTORY = new File(WORKING_DIRECTORY, "assets");
 
-    public void launch(String[] launchArgs, String[] args, File libraryFile) throws NoSuchMethodException, ClassNotFoundException {
-        // add the library to the class loader
-        LAUNCH_CLASS_LOADER.addToClassPath(libraryFile);
-
-        // transform the classes
-        LAUNCH_CLASS_LOADER.transform();
-
-        // update the context class loader
-        Thread.currentThread().setContextClassLoader(LAUNCH_CLASS_LOADER);
-
-        // get the main class of the application
-        Class<?> mainClass = Class.forName("net.minecraft.client.main.Main", false, LAUNCH_CLASS_LOADER);
+    public void launch(String[] launchArgs, boolean development) throws NoSuchMethodException, ClassNotFoundException {
+        // load the main class
+        Class<?> mainClass = loadMain(development);
 
         // get the main method
         Method mainMethod = mainClass.getDeclaredMethod("main", String[].class);
@@ -40,25 +30,48 @@ public class LaunchWrapper {
         }
     }
 
+    /**
+     * Loads the main class
+     *
+     * @param development flag containing if the client has launched in the development mode
+     * @return {@link Class}
+     */
+
+    private Class<?> loadMain(boolean development) throws ClassNotFoundException {
+
+        // if the development mode is enabled
+        if (development) {
+
+            // transform the classes
+            LAUNCH_CLASS_LOADER.transform();
+
+            // update the context class loader
+            Thread.currentThread().setContextClassLoader(LAUNCH_CLASS_LOADER);
+
+            // get the main class of the application
+            return Class.forName("net.minecraft.client.main.Main", false, LAUNCH_CLASS_LOADER);
+        }
+
+        // else just search for the main class
+        return Class.forName("net.minecraft.client.main.Main");
+    }
+
     public static void main(String[] args) throws ClassNotFoundException, NoSuchMethodException {
         // define a new option parser
         OptionParser optionParser = new OptionParser();
 
         // setup the options
         OptionSpec<String> assetIndexOption = optionParser.accepts("assetIndex").withRequiredArg();
-        OptionSpec<File> libraryOption = optionParser.accepts("library").withOptionalArg().ofType(File.class);
+        OptionSpec<Boolean> developmentOption = optionParser.accepts("dev").withOptionalArg().ofType(Boolean.class);
 
         // parse the options
         OptionSet optionSet = optionParser.parse(args);
 
-        // get the library file
-        File libraryFile = libraryOption.value(optionSet);
-        if (!libraryFile.exists()) {
-            throw new RuntimeException("Library file was not provided");
-        }
+        // flag containing if client was launched in development mode
+        boolean development = developmentOption.value(optionSet);
 
         // launch the client
-        new LaunchWrapper().launch(new String[]{
+        new LaunchWrapper().launch(development ? new String[]{
                 "--username", "Player",
                 "--version", "SDK",
                 "--accessToken", "0",
@@ -66,21 +79,7 @@ public class LaunchWrapper {
                 "--assetIndex", assetIndexOption.value(optionSet),
                 "--assetsDir", ASSETS_DIRECTORY.getAbsolutePath(),
                 "--gameDir", WORKING_DIRECTORY.getAbsolutePath()
-        }, new String[0], libraryFile);
-    }
-
-    /**
-     * Combines two arrays into a single array
-     *
-     * @param first  first array that you want to combine
-     * @param second second array that you want to combine
-     * @return combination of the two combined arrays
-     */
-
-    public static <T> T[] concat(T[] first, T[] second) {
-        T[] result = Arrays.copyOf(first, first.length + second.length);
-        System.arraycopy(second, 0, result, first.length, second.length);
-        return result;
+        } : args, development);
     }
 
 }
