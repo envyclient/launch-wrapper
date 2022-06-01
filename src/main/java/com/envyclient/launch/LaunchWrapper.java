@@ -40,7 +40,7 @@ public class LaunchWrapper {
     private Class<?> loadMain(boolean development) throws ClassNotFoundException {
 
         // if the development mode is enabled
-        if (development) {
+        if (!development) {
 
             // transform the classes
             LAUNCH_CLASS_LOADER.transform();
